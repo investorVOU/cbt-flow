@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,49 +7,104 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Logo } from '@/components/ui/logo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardCheck, faUser, faSignOutAlt, faClock, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const StudentDashboard = () => {
   const [studentId, setStudentId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Mock student data - replace with actual user data from Supabase
-  const studentData = {
-    name: 'John Doe',
-    email: 'john.doe@university.edu',
-    username: 'johndoe',
-    studentId: 'STU12345',
+  const [profile, setProfile] = useState<any>(null);
+  const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
+
+  // Fetch user profile and attendance data
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+      fetchRecentAttendance();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    
+    setProfile(data);
   };
 
-  // Mock attendance records - replace with actual data from Supabase
-  const recentAttendance = [
-    { date: '2024-01-15', time: '10:30 AM', status: 'Present' },
-    { date: '2024-01-14', time: '10:25 AM', status: 'Present' },
-    { date: '2024-01-13', time: '10:35 AM', status: 'Present' },
-  ];
+  const fetchRecentAttendance = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    setRecentAttendance(data || []);
+  };
 
   const handleAttendanceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     setIsSubmitting(true);
     
-    // TODO: Implement attendance submission to Supabase
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Attendance marked for student ID:', studentId);
+      const { error } = await supabase
+        .from('attendance')
+        .insert([
+          {
+            user_id: user.id,
+            student_id: studentId.trim()
+          }
+        ]);
+
+      if (error) throw error;
+      
       setStudentId('');
-      // Show success message
+      fetchRecentAttendance(); // Refresh attendance list
+      alert('Attendance marked successfully!');
     } catch (error) {
       console.error('Failed to mark attendance:', error);
-      // Show error message
+      alert('Failed to mark attendance. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleLogout = () => {
-    // TODO: Implement logout with Supabase
-    console.log('Logging out...');
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Logo size="md" />
+          <p className="text-text-secondary mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,8 +116,8 @@ const StudentDashboard = () => {
             
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="font-medium text-text-primary">{studentData.name}</p>
-                <p className="text-sm text-text-secondary">{studentData.studentId}</p>
+                <p className="font-medium text-text-primary">{profile?.display_name || user.email}</p>
+                <p className="text-sm text-text-secondary">{profile?.student_id || 'N/A'}</p>
               </div>
               
               <Button 
@@ -84,7 +140,7 @@ const StudentDashboard = () => {
           {/* Welcome Section */}
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">
-              Welcome back, {studentData.name.split(' ')[0]}!
+              Welcome back, {profile?.display_name?.split(' ')[0] || 'Student'}!
             </h1>
             <p className="text-text-secondary">
               Mark your attendance and view your records from your dashboard.
@@ -156,22 +212,22 @@ const StudentDashboard = () => {
                 <div className="grid grid-cols-1 gap-3">
                   <div>
                     <Label className="text-xs text-text-muted">Full Name</Label>
-                    <p className="font-medium text-text-primary">{studentData.name}</p>
+                    <p className="font-medium text-text-primary">{profile?.display_name || 'N/A'}</p>
                   </div>
                   
                   <div>
                     <Label className="text-xs text-text-muted">Email Address</Label>
-                    <p className="font-medium text-text-primary">{studentData.email}</p>
+                    <p className="font-medium text-text-primary">{user.email}</p>
                   </div>
                   
                   <div>
                     <Label className="text-xs text-text-muted">Username</Label>
-                    <p className="font-medium text-text-primary">{studentData.username}</p>
+                    <p className="font-medium text-text-primary">{profile?.username || 'N/A'}</p>
                   </div>
                   
                   <div>
                     <Label className="text-xs text-text-muted">Student ID</Label>
-                    <p className="font-medium text-text-primary">{studentData.studentId}</p>
+                    <p className="font-medium text-text-primary">{profile?.student_id || 'N/A'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -192,23 +248,33 @@ const StudentDashboard = () => {
             
             <CardContent>
               <div className="space-y-3">
-                {recentAttendance.map((record, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-text-primary">{record.date}</p>
-                      <p className="text-sm text-text-secondary">{record.time}</p>
+                {recentAttendance.length > 0 ? (
+                  recentAttendance.map((record, index) => (
+                    <div 
+                      key={record.id || index}
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-text-primary">
+                          {new Date(record.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-text-secondary">
+                          {new Date(record.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-success-light text-success text-sm font-medium rounded-full">
+                          Present
+                        </span>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-success-light text-success text-sm font-medium rounded-full">
-                        {record.status}
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-text-secondary">
+                    No attendance records yet. Mark your first attendance above!
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
