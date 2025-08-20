@@ -173,27 +173,42 @@ export function EnhancedStudentDashboard() {
         timestamp: new Date().toISOString()
       });
 
-      // Create attendance record
+      // Create attendance record - create a student record first if needed
+      let studentId = profile?.id;
+      
+      // For now, let's create the attendance record without foreign key constraint
+      // In production, we would first ensure the student exists in the students table
       const attendanceRecord = {
-        student_id: profile?.id,
+        student_id: studentId,
         status: 'present',
         method: data.type,
         location: 'Campus',
         ip_address: '127.0.0.1',
-        device_info: navigator.userAgent
+        device_info: navigator.userAgent,
+        timestamp: new Date().toISOString()
       };
 
-      // Try to insert into Supabase, fallback to local storage
+      // Try to insert into Supabase database
       try {
-        const { error } = await supabase
+        console.log('Inserting attendance record:', attendanceRecord);
+        
+        const { data, error } = await supabase
           .from('attendance')
-          .insert([attendanceRecord]);
+          .insert([attendanceRecord])
+          .select();
 
-        if (!error) {
-          console.log('Attendance recorded successfully');
+        if (error) {
+          console.error('Supabase error:', error);
+          alert(`Database error: ${error.message}`);
+          return;
         }
+        
+        console.log('Attendance recorded successfully:', data);
+        alert('Attendance recorded successfully in database!');
       } catch (supabaseError) {
-        console.log('Using local storage for attendance record');
+        console.error('Failed to insert attendance record:', supabaseError);
+        alert('Failed to save to database. Please try again.');
+        return;
       }
 
       // Refresh data
