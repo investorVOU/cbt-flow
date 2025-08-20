@@ -9,13 +9,13 @@ import { Progress } from '@/components/ui/progress';
 import { BiometricCapture } from '@/components/BiometricCapture';
 import { supabase } from '@/integrations/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faClipboardCheck, 
-  faSignOutAlt, 
-  faUser, 
-  faCalendarDays, 
-  faClock, 
-  faRefresh, 
+import {
+  faClipboardCheck,
+  faSignOutAlt,
+  faUser,
+  faCalendarDays,
+  faClock,
+  faRefresh,
   faFingerprint,
   faCamera,
   faIdCard,
@@ -64,7 +64,7 @@ export function EnhancedStudentDashboard() {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
+
     try {
       // Get from Supabase profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -99,7 +99,7 @@ export function EnhancedStudentDashboard() {
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
-      
+
       // Fallback profile
       setProfile({
         id: user.id,
@@ -114,18 +114,37 @@ export function EnhancedStudentDashboard() {
 
   const fetchRecentAttendance = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('attendance')
-        .select('*')
-        .eq('student_id', profile?.id)
-        .order('timestamp', { ascending: false })
+        .select(`
+          id,
+          status,
+          method,
+          location,
+          timestamp,
+          created_at,
+          students (
+            name,
+            email
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
         .limit(5);
 
       if (!error && data) {
-        setRecentAttendance(data);
+        const formattedData = data.map(record => ({
+          id: record.id,
+          status: record.status,
+          method: record.method,
+          location: record.location,
+          timestamp: record.timestamp || record.created_at,
+        }));
+        setRecentAttendance(formattedData);
       } else {
+        console.error('Error fetching attendance:', error);
         // Sample data for demonstration
         setRecentAttendance([
           {
@@ -154,7 +173,7 @@ export function EnhancedStudentDashboard() {
     const totalDays = 20; // Sample: 20 training days
     const presentDays = recentAttendance.filter(record => record.status === 'present').length;
     const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-    
+
     setAttendanceStats({
       totalDays,
       presentDays,
@@ -164,7 +183,7 @@ export function EnhancedStudentDashboard() {
 
   const handleBiometricCapture = async (data: { type: string; data: string; confidence: number }) => {
     setLoading(true);
-    
+
     try {
       // Store the verification result
       setLastVerification({
@@ -175,7 +194,7 @@ export function EnhancedStudentDashboard() {
 
       // Create attendance record - create a student record first if needed
       let studentId = profile?.id;
-      
+
       // For now, let's create the attendance record without foreign key constraint
       // In production, we would first ensure the student exists in the students table
       const attendanceRecord = {
@@ -191,7 +210,7 @@ export function EnhancedStudentDashboard() {
       // Try to insert into Supabase database
       try {
         console.log('Inserting attendance record:', attendanceRecord);
-        
+
         const { data, error } = await supabase
           .from('attendance')
           .insert([attendanceRecord])
@@ -202,7 +221,7 @@ export function EnhancedStudentDashboard() {
           alert(`Database error: ${error.message}`);
           return;
         }
-        
+
         console.log('Attendance recorded successfully:', data);
         alert('Attendance recorded successfully in database!');
       } catch (supabaseError) {
@@ -221,7 +240,7 @@ export function EnhancedStudentDashboard() {
       console.error('Error recording attendance:', error);
       alert('Error recording attendance. Please try again.');
     }
-    
+
     setLoading(false);
   };
 
@@ -263,10 +282,10 @@ export function EnhancedStudentDashboard() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={fetchData}
                 disabled={loading}
@@ -275,8 +294,8 @@ export function EnhancedStudentDashboard() {
                 <FontAwesomeIcon icon={faRefresh} className={loading ? 'animate-spin' : ''} />
                 Refresh
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={handleLogout}
                 data-testid="button-logout"
@@ -359,7 +378,7 @@ export function EnhancedStudentDashboard() {
                     Use our secure biometric verification system to mark your attendance quickly and safely.
                   </p>
                 </div>
-                
+
                 <Button
                   onClick={() => setShowBiometric(true)}
                   size="lg"
@@ -383,7 +402,7 @@ export function EnhancedStudentDashboard() {
                 )}
               </div>
             ) : (
-              <BiometricCapture 
+              <BiometricCapture
                 onCapture={handleBiometricCapture}
                 onError={handleBiometricError}
               />

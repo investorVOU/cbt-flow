@@ -92,28 +92,50 @@ const AdminDashboard = () => {
 
   const fetchAttendanceRecords = async () => {
     try {
-      // Try to fetch from attendance table first
+      // Fetch attendance data with student information
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance')
-        .select('*')
+        .select(`
+          id,
+          status,
+          method,
+          location,
+          timestamp,
+          created_at,
+          user_id,
+          students (
+            id,
+            name,
+            email,
+            student_id
+          )
+        `)
         .order('created_at', { ascending: false });
 
-      // Try to get profiles data for student names
+      // Also get profiles data for fallback
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
       if (!attendanceError && attendanceData) {
-        // Map attendance records with student names from profiles
+        // Map attendance records with student names
         const transformedData = attendanceData.map(record => {
           const studentProfile = profilesData?.find(p => p.user_id === record.user_id);
+          const studentName = record.students?.name || 
+                             studentProfile?.display_name || 
+                             studentProfile?.username || 
+                             'Unknown Student';
+          const studentEmail = record.students?.email || 
+                              studentProfile?.username || 
+                              'No email';
+          
           return {
             ...record,
             status: record.status || 'present',
             method: record.method || 'manual',
-            student_name: studentProfile?.display_name || studentProfile?.username || 'Unknown Student',
-            student_email: studentProfile?.username || 'No email',
-            timestamp: record.created_at,
+            student_name: studentName,
+            student_email: studentEmail,
+            timestamp: record.timestamp || record.created_at,
             location: record.location || 'Campus'
           };
         });
