@@ -53,7 +53,9 @@ interface AttendanceRecord {
 interface AdminLog {
   id: string | number;
   action: string;
-  details: string;
+  details?: string;
+  admin_email?: string;
+  created_at?: string;
   timestamp: string;
   admin_email: string;
 }
@@ -90,91 +92,111 @@ const AdminDashboard = () => {
 
   const fetchAttendanceRecords = async () => {
     try {
-      // Fetch attendance with student names using join
-      const { data, error } = await supabase
+      // Try to fetch from attendance table first
+      const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance')
-        .select(`
-          *,
-          students (
-            id,
-            name,
-            email,
-            student_id
-          )
-        `)
-        .order('timestamp', { ascending: false });
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Transform data to include student names
-      const transformedData = (data || []).map(record => ({
-        ...record,
-        student_name: record.students?.name || 'Unknown Student',
-        student_email: record.students?.email || 'No email'
-      }));
-      
-      setAttendanceRecords(transformedData || []);
+      // Try to get profiles data for student names
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (!attendanceError && attendanceData) {
+        // Map attendance records with student names from profiles
+        const transformedData = attendanceData.map(record => {
+          const studentProfile = profilesData?.find(p => p.user_id === record.user_id);
+          return {
+            ...record,
+            status: record.status || 'present',
+            method: record.method || 'manual',
+            student_name: studentProfile?.display_name || studentProfile?.username || 'Unknown Student',
+            student_email: studentProfile?.username || 'No email',
+            timestamp: record.created_at,
+            location: record.location || 'Campus'
+          };
+        });
+        
+        setAttendanceRecords(transformedData);
+        return;
+      }
     } catch (error) {
       console.error('Error fetching attendance records:', error);
-      // Fallback: create some sample data for testing
-      const sampleAttendance = [
-        {
-          id: 1,
-          student_name: 'John Doe',
-          student_email: 'john@school.edu',
-          status: 'present',
-          method: 'face_scan',
-          timestamp: new Date().toISOString(),
-          location: 'Lab 1'
-        },
-        {
-          id: 2,
-          student_name: 'Jane Smith',
-          student_email: 'jane@school.edu',
-          status: 'present',
-          method: 'biometric',
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          location: 'Lab 2'
-        }
-      ];
-      setAttendanceRecords(sampleAttendance);
     }
+
+    // Fallback: create sample data for testing
+    const sampleAttendance = [
+      {
+        id: 1,
+        student_name: 'John Doe',
+        student_email: 'john@school.edu', 
+        status: 'present',
+        method: 'face_scan',
+        timestamp: new Date().toISOString(),
+        location: 'Lab 1'
+      },
+      {
+        id: 2,
+        student_name: 'Jane Smith',
+        student_email: 'jane@school.edu',
+        status: 'present', 
+        method: 'biometric',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        location: 'Lab 2'
+      }
+    ];
+    setAttendanceRecords(sampleAttendance);
   };
 
   const fetchProfiles = async () => {
     try {
+      // Fetch from Supabase profiles table
       const { data, error } = await supabase
-        .from('students')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (!error && data) {
+        // Transform profiles data to match expected format
+        const transformedProfiles = data.map(profile => ({
+          ...profile,
+          name: profile.display_name || profile.username || 'No name set',
+          email: profile.username || 'No email', // username field might store email
+          student_id: profile.student_id,
+          course: 'Computer Science', // Default course
+          is_active: true // Default to active
+        }));
+        
+        setProfiles(transformedProfiles);
+        return;
+      }
     } catch (error) {
       console.error('Error fetching student profiles:', error);
-      // Fallback: create some sample data for testing
-      const sampleStudents = [
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'john@school.edu',
-          student_id: 'ST001',
-          course: 'Computer Science',
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane@school.edu',
-          student_id: 'ST002',
-          course: 'Information Technology',
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-      ];
-      setProfiles(sampleStudents);
     }
+
+    // Fallback: create sample data for testing
+    const sampleStudents = [
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@school.edu',
+        student_id: 'ST001', 
+        course: 'Computer Science',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 2,
+        name: 'Jane Smith', 
+        email: 'jane@school.edu',
+        student_id: 'ST002',
+        course: 'Information Technology',
+        is_active: true,
+        created_at: new Date().toISOString()
+      }
+    ];
+    setProfiles(sampleStudents);
   };
 
   const fetchAdminLogs = async () => {

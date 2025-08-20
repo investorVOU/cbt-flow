@@ -66,34 +66,49 @@ export function EnhancedStudentDashboard() {
     if (!user) return;
     
     try {
-      // Try to get from students table first
-      const { data: studentData, error } = await supabase
-        .from('students')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-
-      if (studentData) {
-        setProfile(studentData);
-        return;
-      }
-
-      // Fallback to profiles table
-      const { data: profileData } = await supabase
+      // Get from Supabase profiles table
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      setProfile(profileData || {
+      if (!profileError && profileData) {
+        setProfile({
+          id: profileData.id,
+          name: profileData.display_name || profileData.username || user.email?.split('@')[0] || 'Student',
+          email: user.email,
+          student_id: profileData.student_id || `ST${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+          course: 'Computer Science',
+          is_active: true,
+          display_name: profileData.display_name,
+          username: profileData.username,
+          created_at: profileData.created_at
+        });
+        return;
+      }
+
+      // If no profile exists, create a basic fallback
+      setProfile({
         id: user.id,
         name: user.email?.split('@')[0] || 'Student',
         email: user.email,
         student_id: `ST${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        course: 'Computer Science'
+        course: 'Computer Science',
+        is_active: true
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
+      
+      // Fallback profile
+      setProfile({
+        id: user.id,
+        name: user.email?.split('@')[0] || 'Student',
+        email: user.email,
+        student_id: 'ST000',
+        course: 'Computer Science',
+        is_active: true
+      });
     }
   };
 
