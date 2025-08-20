@@ -29,6 +29,30 @@ CREATE TABLE public.attendance (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Ensure all columns exist (in case table already exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attendance' AND column_name = 'status') THEN
+        ALTER TABLE public.attendance ADD COLUMN status TEXT NOT NULL DEFAULT 'present';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attendance' AND column_name = 'method') THEN
+        ALTER TABLE public.attendance ADD COLUMN method TEXT NOT NULL DEFAULT 'manual';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attendance' AND column_name = 'location') THEN
+        ALTER TABLE public.attendance ADD COLUMN location TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attendance' AND column_name = 'ip_address') THEN
+        ALTER TABLE public.attendance ADD COLUMN ip_address TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attendance' AND column_name = 'device_info') THEN
+        ALTER TABLE public.attendance ADD COLUMN device_info TEXT;
+    END IF;
+END $$;
+
 -- Create admin_logs table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.admin_logs (
     id SERIAL PRIMARY KEY,

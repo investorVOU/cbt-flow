@@ -192,13 +192,9 @@ export function EnhancedStudentDashboard() {
         timestamp: new Date().toISOString()
       });
 
-      // Create attendance record - create a student record first if needed
-      let studentId = profile?.id;
-
-      // For now, let's create the attendance record without foreign key constraint
-      // In production, we would first ensure the student exists in the students table
+      // Create attendance record using user_id (UUID) instead of student_id (integer)
       const attendanceRecord = {
-        student_id: studentId,
+        user_id: user.id, // Use the Supabase auth user ID (UUID)
         status: 'present',
         method: data.type,
         location: 'Campus',
