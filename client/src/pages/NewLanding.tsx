@@ -16,9 +16,11 @@ import {
   faArrowRight,
   faCheckCircle
 } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '@/hooks/useAuth';
 
 export function NewLanding() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-surface to-surface-elevated">
@@ -45,22 +47,34 @@ export function NewLanding() {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/login')}
-                className="hover:bg-primary/10"
-                data-testid="button-login"
-              >
-                Student Login
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/admin')}
-                className="border-primary/20 hover:bg-primary/5"
-                data-testid="button-admin"
-              >
-                Admin Portal
-              </Button>
+              {user ? (
+                <Button 
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-primary hover:bg-primary/90"
+                  data-testid="button-dashboard"
+                >
+                  Go to Dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => navigate('/login')}
+                    className="hover:bg-primary/10"
+                    data-testid="button-login"
+                  >
+                    Login
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate('/signup')}
+                    className="border-primary/20 hover:bg-primary/5"
+                    data-testid="button-signup"
+                  >
+                    Register
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -92,25 +106,38 @@ export function NewLanding() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button 
-                size="lg" 
-                className="text-lg px-8 py-6 bg-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transition-all"
-                onClick={() => navigate('/signup')}
-                data-testid="button-get-started"
-              >
-                Get Started Today
-                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="text-lg px-8 py-6 border-2 hover:bg-accent/5"
-                onClick={() => navigate('/login')}
-                data-testid="button-view-demo"
-              >
-                <FontAwesomeIcon icon={faCamera} className="mr-2" />
-                View Demo
-              </Button>
+              {user ? (
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-6 bg-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => navigate('/dashboard')}
+                  data-testid="button-go-dashboard"
+                >
+                  Go to Dashboard
+                  <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    size="lg" 
+                    className="text-lg px-8 py-6 bg-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transition-all"
+                    onClick={() => navigate('/signup')}
+                    data-testid="button-get-started"
+                  >
+                    Register Now
+                    <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="text-lg px-8 py-6 border-2 hover:bg-accent/5"
+                    onClick={() => navigate('/login')}
+                    data-testid="button-student-login"
+                  >
+                    Student Login
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Feature Icons */}

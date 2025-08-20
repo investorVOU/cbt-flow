@@ -179,7 +179,7 @@ export function EnhancedStudentDashboard() {
         status: 'present',
         method: data.type,
         location: 'Campus',
-        ip_address: 'localhost',
+        ip_address: '127.0.0.1',
         device_info: navigator.userAgent
       };
 
