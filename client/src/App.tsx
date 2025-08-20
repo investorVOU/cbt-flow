@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import './lib/fontawesome';
-import Landing from "./pages/Landing";
+import { NewLanding } from "./pages/NewLanding";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import StudentDashboard from "./pages/StudentDashboard";
+import { EnhancedStudentDashboard } from "./pages/EnhancedStudentDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -23,10 +23,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<NewLanding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<StudentDashboard />} />
+            <Route path="/dashboard" element={<EnhancedStudentDashboard />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
