@@ -263,7 +263,7 @@ export function NewLanding() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              variant="secondary"
+              variant="outline"
               className="text-lg px-8 py-6"
               onClick={() => navigate('/signup')}
               data-testid="button-start-free-trial"

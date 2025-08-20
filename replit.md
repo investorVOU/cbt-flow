@@ -8,6 +8,15 @@ This is a modern Computer-Based Training (CBT) attendance management platform bu
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (December 2024)
+
+- **Major Feature Updates**: Added comprehensive biometric verification system with face scanning, fingerprint authentication, and ID upload capabilities
+- **Database Migration**: Successfully migrated from Lovable to Replit with PostgreSQL backend using Drizzle ORM
+- **UI Redesign**: Created modern, unique homepage design avoiding AI-generated gradients with prominent signup/login buttons
+- **Admin Dashboard Enhancement**: Fixed student name display issues, added proper database relationships and real-time attendance monitoring
+- **Student Dashboard Overhaul**: Implemented new enhanced dashboard with biometric features, camera access, and comprehensive attendance tracking
+- **Documentation**: Created detailed README.md with complete setup instructions and usage guides
+
 ## System Architecture
 
 ### Frontend Architecture

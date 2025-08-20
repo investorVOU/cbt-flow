@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,19 +22,28 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
-  id: string;
-  user_id: string;
-  display_name: string | null;
-  username: string | null;
+  id: string | number;
+  user_id?: string;
+  name: string;
+  email: string;
   student_id: string | null;
+  course?: string;
+  is_active: boolean;
+  display_name?: string | null;
+  username?: string | null;
   created_at: string;
 }
 
 interface AttendanceRecord {
-  id: string;
-  user_id: string;
-  student_id: string;
-  created_at: string;
+  id: string | number;
+  user_id?: string;
+  student_id?: string | number;
+  student_name?: string;
+  status: string;
+  method: string;
+  location?: string;
+  timestamp?: string;
+  created_at?: string;
   profiles?: {
     display_name: string | null;
     username: string | null;
@@ -41,7 +51,7 @@ interface AttendanceRecord {
 }
 
 interface AdminLog {
-  id: string;
+  id: string | number;
   action: string;
   details: string;
   timestamp: string;
@@ -220,6 +230,11 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error logging admin action:', error);
     }
+  };
+
+  const handleDeleteAttendance = async (recordId: string | number) => {
+    await logAdminAction('Delete Attendance', `Deleted attendance record ID: ${recordId}`);
+    setAttendanceRecords(prev => prev.filter(record => record.id !== recordId));
   };
 
   const deleteStudent = async (profile: Profile) => {
@@ -446,7 +461,7 @@ const AdminDashboard = () => {
                       <TableCell>{profile.student_id || 'N/A'}</TableCell>
                       <TableCell>{profile.course || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant={profile.is_active ? 'default' : 'secondary'}>
+                        <Badge variant={profile.is_active ? 'default' : 'outline'}>
                           {profile.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
@@ -490,7 +505,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {adminLogs.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell>{new Date((log as any).timestamp || log.created_at).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
                       <TableCell>{log.admin_email}</TableCell>
                       <TableCell>
                         <span className="px-2 py-1 bg-accent/10 text-accent rounded text-sm">

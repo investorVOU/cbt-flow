@@ -291,7 +291,7 @@ export function EnhancedStudentDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-text-muted">Status</p>
-                  <Badge variant={profile?.is_active !== false ? 'default' : 'secondary'}>
+                  <Badge variant={profile?.is_active !== false ? 'default' : 'outline'}>
                     {profile?.is_active !== false ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>

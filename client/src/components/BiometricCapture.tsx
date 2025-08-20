@@ -175,7 +175,7 @@ export function BiometricCapture({ onCapture, onError }: BiometricCaptureProps) 
               onClick={simulateFingerprint}
               disabled={isCapturing || isProcessing}
               className="h-20 flex-col gap-2"
-              variant="secondary"
+              variant="outline"
               data-testid="button-fingerprint"
             >
               <FontAwesomeIcon icon={faFingerprint} className="text-xl" />
